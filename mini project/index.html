@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Birthday Slice Surprise 🎂✨</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Fredoka & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: radial-gradient(circle at 50% 20%, #fff0f7 0%, #ffe5ec 35%, #fed7e2 70%, #fbcfe8 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .font-party {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+
+    /* Page sliding transitions */
+    .app-page {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      min-height: 100vh;
+      transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+      will-change: transform, opacity;
+    }
+
+    .page-active {
+      transform: translateX(0%);
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 10;
+    }
+
+    .page-left {
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page-right {
+      transform: translateX(100%);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Candles flickers */
+    @keyframes candleFlameFlicker {
+      0%, 100% {
+        transform: scale(1) rotate(-1.5deg);
+        filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.95)) drop-shadow(0 0 16px rgba(255, 100, 0, 0.7));
+      }
+      25% {
+        transform: scale(1.12, 0.88) rotate(2.5deg);
+        filter: drop-shadow(0 0 12px rgba(255, 210, 0, 1)) drop-shadow(0 0 22px rgba(255, 80, 0, 0.8));
+      }
+      50% {
+        transform: scale(0.92, 1.08) rotate(-2deg);
+        filter: drop-shadow(0 0 7px rgba(255, 160, 0, 0.9)) drop-shadow(0 0 14px rgba(255, 60, 0, 0.6));
+      }
+      75% {
+        transform: scale(1.06, 0.94) rotate(1deg);
+        filter: drop-shadow(0 0 14px rgba(255, 230, 60, 1)) drop-shadow(0 0 24px rgba(255, 120, 0, 0.85));
+      }
+    }
+
+    .flame-element {
+      animation: candleFlameFlicker 0.9s infinite ease-in-out;
+      transform-origin: center bottom;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .flame-blown {
+      opacity: 0 !important;
+      transform: scale(0.1) translateY(-14px) !important;
+      animation: none !important;
+    }
+
+    /* 3D Realistic Cake & Knife Transitions */
+    @keyframes knifeHoverFloat {
+      0%, 100% {
+        transform: translate(-50%, -60%) rotate(-35deg) scale(1);
+      }
+      50% {
+        transform: translate(-50%, -75%) rotate(-30deg) scale(1.05);
+      }
+    }
+
+    .knife-floating {
+      animation: knifeHoverFloat 2.4s infinite ease-in-out;
+      cursor: pointer;
+    }
+
+    @keyframes knifeCutMotion {
+      0% {
+        transform: translate(-50%, -75%) rotate(-35deg) scale(1.1);
+      }
+      40% {
+        transform: translate(-50%, -30%) rotate(-8deg) scale(1.18);
+      }
+      70% {
+        transform: translate(-50%, 15%) rotate(5deg) scale(1.05);
+      }
+      85% {
+        transform: translate(-50%, 45%) rotate(18deg) scale(0.95);
+        opacity: 0.9;
+      }
+      100% {
+        transform: translate(-50%, 75%) rotate(25deg) scale(0.7);
+        opacity: 0;
+      }
+    }
+
+    .knife-slicing {
+      animation: knifeCutMotion 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+      pointer-events: none;
+    }
+
+    /* 3D Cake slice separation */
+    .slice-3d {
+      transition: transform 0.85s cubic-bezier(0.34, 1.45, 0.64, 1), filter 0.35s ease;
+      cursor: pointer;
+    }
+
+    .slice-3d:hover {
+      filter: brightness(1.12) drop-shadow(0 10px 14px rgba(225, 29, 72, 0.4));
+    }
+
+    /* Realistic 3D slice outwards separation on knife cut */
+    .cake-cut-open .slice-pos-1 {
+      transform: translate(28px, 18px);
+    }
+    .cake-cut-open .slice-pos-2 {
+      transform: translate(0px, 36px);
+    }
+    .cake-cut-open .slice-pos-3 {
+      transform: translate(-28px, 18px);
+    }
+    .cake-cut-open .slice-pos-4 {
+      transform: translate(-25px, -18px);
+    }
+    .cake-cut-open .slice-pos-5 {
+      transform: translate(0px, -26px);
+    }
+    .cake-cut-open .slice-pos-6 {
+      transform: translate(25px, -18px);
+    }
+
+    /* Frosted glass card */
+    .glass-party {
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 24px 48px -12px rgba(244, 63, 94, 0.22), 0 8px 18px -4px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Floating balloons & background confetti decorations */
+    @keyframes floatDecor {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(4deg); }
+    }
+    .anim-float-1 { animation: floatDecor 4.2s ease-in-out infinite; }
+    .anim-float-2 { animation: floatDecor 5.4s ease-in-out infinite 1.4s; }
+    .anim-float-3 { animation: floatDecor 6.1s ease-in-out infinite 2.2s; }
+
+    /* Audio visualizer bar pulsation */
+    @keyframes soundBarPulse {
+      0%, 100% { height: 6px; }
+      50% { height: 18px; }
+    }
+    .bar-anim-1 { animation: soundBarPulse 0.45s ease-in-out infinite; }
+    .bar-anim-2 { animation: soundBarPulse 0.65s ease-in-out infinite 0.15s; }
+    .bar-anim-3 { animation: soundBarPulse 0.52s ease-in-out infinite 0.28s; }
+    .bar-anim-4 { animation: soundBarPulse 0.72s ease-in-out infinite 0.08s; }
+
+    /* Golden Sparkle Glow */
+    .glow-gold {
+      filter: drop-shadow(0 0 14px rgba(250, 204, 21, 0.85)) drop-shadow(0 0 25px rgba(245, 158, 11, 0.5));
+    }
+  </style>
+</head>
+<body class="relative flex flex-col justify-between">
+
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+    <div class="absolute -top-6 -left-6 text-7xl sm:text-8xl opacity-35 anim-float-1 select-none">🎈</div>
+    <div class="absolute top-1/4 -right-4 text-7xl sm:text-8xl opacity-35 anim-float-2 select-none">🎈</div>
+    <div class="absolute bottom-24 -left-4 text-7xl sm:text-8xl opacity-35 anim-float-3 select-none">🎈</div>
+    <div class="absolute top-8 right-1/4 text-5xl opacity-40 anim-float-2 select-none">✨</div>
+    <div class="absolute bottom-1/3 right-8 text-6xl opacity-35 anim-float-1 select-none">🎁</div>
+    <div class="absolute top-1/3 left-6 text-5xl opacity-30 anim-float-3 select-none">🧁</div>
+    <div class="absolute -bottom-6 right-1/3 text-6xl opacity-35 anim-float-2 select-none">🍰</div>
+  </div>
+
+  <div id="page1" class="app-page page-active flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
+    <!-- Top branding bar -->
+    <header class="w-full max-w-2xl flex items-center justify-between py-2">
+      <div class="flex items-center gap-2">
+        <span class="text-3xl">🍰</span>
+        <span class="font-party text-xl sm:text-2xl font-bold bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
+          Birthday Slice Surprise
+        </span>
+      </div>
+      <span class="text-xs sm:text-sm font-semibold px-3 py-1 bg-white/80 border border-pink-200 text-pink-600 rounded-full shadow-xs">
+        Page 1 of 2
+      </span>
+    </header>
+
+    <!-- Audio Element with multiple sources and fallback -->
+    <audio id="birthdayAudio" preload="auto">
+      <source src="Happy Birthday To You Ji-(Mr-Jat.in).mp3" type="audio/mpeg">
+      <source src="birthday_song.mp3" type="audio/mpeg">
+      <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Main Entry Glass Card -->
+    <main class="w-full max-w-lg glass-party rounded-3xl p-6 sm:p-10 my-auto text-center shadow-xl border border-white">
+      <div class="relative w-24 h-24 mx-auto mb-4 bg-gradient-to-tr from-pink-500 to-amber-300 rounded-3xl flex items-center justify-center text-5xl shadow-lg shadow-pink-300/50">
+        <span class="animate-bounce" id="avatarPreview">🌸</span>
+        <span class="absolute -top-2 -right-2 text-xl bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full font-bold shadow-xs">✨</span>
+      </div>
+
+      <h1 class="font-party text-3xl sm:text-4xl font-bold text-slate-800 mb-2">
+        Celebrate Someone Special
+      </h1>
+      <p class="text-slate-600 text-sm sm:text-base mb-6 font-medium">
+        Send warm, heartfelt birthday wishes and celebrate with cake and music! 🎂✨
+      </p>
+
+      <form id="birthdayForm" class="space-y-4" onsubmit="event.preventDefault(); proceedToCelebration();">
+        <!-- Input with Validation -->
+        <div class="relative text-left">
+          <label for="userNameInput" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+            Birthday Star's Name *
+          </label>
+          <div class="relative">
+            <input 
+              type="text" 
+              id="userNameInput" 
+              required 
+              maxlength="26"
+              placeholder="e.g. Rahul, Priya, Alex, Sam..." 
+              class="w-full px-5 py-4 text-lg font-bold text-slate-800 bg-white/95 border-2 border-pink-200 rounded-2xl focus:outline-none focus:border-rose-500 focus:ring-4 focus:ring-pink-100 transition shadow-inner placeholder-slate-400"
+              autocomplete="off"
+              autofocus
+            />
+            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-2xl pointer-events-none">⭐</span>
+          </div>
+          <p id="nameError" class="text-xs text-rose-500 mt-1 hidden font-semibold ml-1">Please enter a name to begin!</p>
+        </div>
+
+        <!-- Heartfelt Vibe Tag -->
+        <div class="text-left">
+          <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">
+            Choose a Vibe
+          </label>
+          <div class="grid grid-cols-3 gap-2" id="vibeSelector">
+            <button type="button" onclick="selectVibe('🌸 Pure Sunshine', '🌸')" class="vibe-btn active-vibe px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border-2 border-rose-400 bg-rose-50 text-rose-700 transition">
+              🌸 Pure Sunshine
+            </button>
+            <button type="button" onclick="selectVibe('💖 Kind & Caring', '💖')" class="vibe-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-pink-50 transition">
+              💖 Kind & Caring
+            </button>
+            <button type="button" onclick="selectVibe('✨ Inspiring Soul', '✨')" class="vibe-btn px-3 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-pink-50 transition">
+              ✨ Inspiring Soul
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick sample names -->
+        <div class="pt-2 flex items-center justify-center gap-2 flex-wrap text-xs text-slate-500">
+          <span>Quick picks:</span>
+          <button type="button" onclick="fillName('Rahul ✨')" class="px-2.5 py-1 bg-white hover:bg-pink-100 rounded-lg border border-pink-200 font-medium text-pink-600 transition">Rahul ✨</button>
+          <button type="button" onclick="fillName('Priya 🌸')" class="px-2.5 py-1 bg-white hover:bg-pink-100 rounded-lg border border-pink-200 font-medium text-pink-600 transition">Priya 🌸</button>
+          <button type="button" onclick="fillName('Alex ⭐')" class="px-2.5 py-1 bg-white hover:bg-pink-100 rounded-lg border border-pink-200 font-medium text-pink-600 transition">Alex ⭐</button>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="goCelebrationBtn"
+          class="w-full mt-4 py-4 px-6 font-party text-lg font-bold tracking-wide text-white bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 rounded-2xl shadow-lg shadow-rose-300/60 hover:shadow-xl hover:shadow-rose-400 hover:-translate-y-0.5 active:translate-y-0 active:scale-98 transition flex items-center justify-center gap-2 cursor-pointer">
+          <span>Start Celebration 🎂✨</span>
+          <span class="text-2xl">➔</span>
+        </button>
+      </form>
+    </main>
+
+    <footer class="w-full max-w-2xl text-center py-2 text-xs text-slate-500">
+      Birthday Wishes & Celebration • Pure Vanilla JS & Web Audio Synthesizer
+    </footer>
+  </div>
+
+  <div id="page2" class="app-page page-right flex flex-col justify-between p-3 sm:p-6 overflow-y-auto">
+    <!-- Header with User Greeting and Controls -->
+    <header class="w-full max-w-3xl mx-auto flex items-center justify-between gap-2 z-20 py-1">
+      <button onclick="goToPage1()" class="flex items-center gap-1.5 px-3 py-1.5 bg-white/90 hover:bg-white text-slate-700 text-xs sm:text-sm font-bold rounded-xl border border-pink-200 shadow-sm transition active:scale-95">
+        <span>←</span> <span>Edit Name</span>
+      </button>
+
+      <!-- Music Visualizer & Control Badge -->
+      <div class="flex items-center gap-2">
+        <div id="musicStatusBadge" class="hidden flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-300 text-rose-700 rounded-xl text-xs font-bold">
+          <div class="flex items-end gap-0.5 h-4">
+            <span class="w-1 bg-rose-500 rounded-full bar-anim-1"></span>
+            <span class="w-1 bg-rose-500 rounded-full bar-anim-2"></span>
+            <span class="w-1 bg-rose-500 rounded-full bar-anim-3"></span>
+            <span class="w-1 bg-rose-500 rounded-full bar-anim-4"></span>
+          </div>
+          <span class="hidden sm:inline">🎵 Happy Birthday To You Ji</span>
+        </div>
+
+        <button id="audioToggleBtn" onclick="toggleTuneAudio()" class="px-3 py-1.5 bg-white/90 hover:bg-white text-slate-800 text-xs sm:text-sm font-bold rounded-xl border border-pink-200 shadow-sm transition flex items-center gap-1 active:scale-95">
+          <span id="audioIcon">🎵</span>
+          <span id="audioLabel">Replay Music</span>
+        </button>
+
+        <button onclick="triggerConfettiExplosion()" class="px-3 py-1.5 bg-amber-400 hover:bg-amber-500 text-amber-950 text-xs sm:text-sm font-bold rounded-xl shadow-sm transition flex items-center gap-1 active:scale-95">
+          <span>🎉</span> <span class="hidden sm:inline">Confetti</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Cake Cutting Stage -->
+    <main class="w-full max-w-2xl mx-auto flex-1 flex flex-col items-center justify-center my-auto py-2 z-10 text-center">
+      
+      <!-- Star Title Ribbon -->
+    <div class="mb-3 animate-fade-in">
+      <span class="inline-block py-1 px-4 bg-pink-100 text-pink-700 text-xs sm:text-sm font-extrabold rounded-full tracking-wide shadow-xs mb-1.5 font-party">
+        Special Celebration Day ✨
+      </span>
+      <h2 id="starNameDisplay" class="font-party text-3xl sm:text-5xl font-black bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 bg-clip-text text-transparent">
+        Happy Birthday!
+      </h2>
+      <p id="actionGuideText" class="text-slate-700 font-medium text-xs sm:text-sm mt-1 bg-white/80 py-1 px-4 rounded-full border border-pink-200 inline-block shadow-xs">
+        👇 Tap the <strong>Birthday Knife</strong> to cut the cake & unveil the birthday letter!
+      </p>
+    </div>
+
+    <!-- Interactive Cake Stage Area -->
+    <div id="cakeStage" class="relative w-full max-w-[390px] sm:max-w-[440px] aspect-square flex items-center justify-center my-1 select-none">
+      
+      <!-- Realistic 3D Bakery Cake SVG -->
+      <svg id="cakeVector" viewBox="0 0 460 460" class="w-full h-full overflow-visible drop-shadow-2xl">
+        <defs>
+          <!-- Soft Ground Ambient Occlusion -->
+          <radialGradient id="tableShadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#831843" stop-opacity="0.38"/>
+            <stop offset="60%" stop-color="#be185d" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#be185d" stop-opacity="0"/>
+          </radialGradient>
+
+          <!-- Gold Platter Rim -->
+          <linearGradient id="goldRim" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="25%" stop-color="#f59e0b"/>
+            <stop offset="50%" stop-color="#fef9c3"/>
+            <stop offset="75%" stop-color="#d97706"/>
+            <stop offset="100%" stop-color="#b45309"/>
+          </linearGradient>
+
+          <!-- Marble Pedestal Plate -->
+          <radialGradient id="marblePlate" cx="45%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="65%" stop-color="#fdf2f8"/>
+            <stop offset="90%" stop-color="#fbcfe8"/>
+            <stop offset="100%" stop-color="#f472b6"/>
+          </radialGradient>
+
+          <!-- Buttercream Side Gradient (Lighting from top-left) -->
+          <linearGradient id="frostingCylinder" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fda4af"/>
+            <stop offset="25%" stop-color="#ffe4e6"/>
+            <stop offset="60%" stop-color="#fda4af"/>
+            <stop offset="100%" stop-color="#e11d48"/>
+          </linearGradient>
+
+          <!-- Top Glaze Ellipse -->
+          <radialGradient id="topGlaze" cx="42%" cy="40%" r="58%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="45%" stop-color="#fff1f2"/>
+            <stop offset="85%" stop-color="#fecdd3"/>
+            <stop offset="100%" stop-color="#f43f5e"/>
+          </radialGradient>
+
+          <!-- Chocolate Ganache Drips -->
+          <linearGradient id="ganacheChoc" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#78350f"/>
+            <stop offset="60%" stop-color="#451a03"/>
+            <stop offset="100%" stop-color="#260e02"/>
+          </linearGradient>
+
+          <!-- Strawberry Glaze -->
+          <radialGradient id="berryShine" cx="35%" cy="30%" r="55%">
+            <stop offset="0%" stop-color="#ffedd5"/>
+            <stop offset="35%" stop-color="#f43f5e"/>
+            <stop offset="80%" stop-color="#be123c"/>
+            <stop offset="100%" stop-color="#881337"/>
+          </radialGradient>
+
+          <!-- Realistic Sponge Layer Pattern for Sliced Cake Walls -->
+          <pattern id="spongeTexture" width="10" height="24" patternUnits="userSpaceOnUse">
+            <!-- Chocolate sponge layer -->
+            <rect x="0" y="0" width="10" height="7" fill="#451a03"/>
+            <!-- Strawberry raspberry cream filling -->
+            <rect x="0" y="7" width="10" height="4" fill="#f43f5e"/>
+            <!-- Vanilla biscuit sponge layer -->
+            <rect x="0" y="11" width="10" height="7" fill="#fef08a"/>
+            <!-- Vanilla chantilly mousse filling -->
+            <rect x="0" y="18" width="10" height="3" fill="#fffbeb"/>
+            <!-- Crunchy praline base -->
+            <rect x="0" y="21" width="10" height="3" fill="#b45309"/>
+          </pattern>
+        </defs>
+
+        <!-- Plate Ambient Shadow on Table -->
+        <ellipse cx="230" cy="355" rx="195" ry="46" fill="url(#tableShadow)"/>
+
+        <!-- Gold Scalloped Serving Pedestal -->
+        <g id="cakeStand">
+          <!-- Stand Base Rim -->
+          <ellipse cx="230" cy="340" rx="180" ry="48" fill="url(#goldRim)"/>
+          <ellipse cx="230" cy="336" rx="174" ry="44" fill="url(#marblePlate)" stroke="#fbcfe8" stroke-width="2"/>
+          <ellipse cx="230" cy="336" rx="166" ry="40" fill="none" stroke="url(#goldRim)" stroke-width="2" stroke-dasharray="6 4"/>
+        </g>
+
+        <!-- Slices Container (Groups will separate in 3D perspective upon knife cut) -->
+        <g id="cakeSlicesGroup" class="transition-all duration-700">
+
+          <!-- SLICE 4: Back-Left (Angle ~180° to 240°) -->
+          <g id="slice4" class="slice-3d slice-pos-4">
+            <!-- Top Sector -->
+            <path d="M 230 190 L 95 190 A 135 55 0 0 1 162 142 Z" fill="#ffe4e6" stroke="#fb7185" stroke-width="1.5"/>
+            <!-- Exposed Cut Wall (Right wall) -->
+            <path d="M 230 190 L 162 142 L 162 232 L 230 280 Z" fill="url(#spongeTexture)" stroke="#78350f" stroke-width="0.8"/>
+            <!-- Rosette & Strawberry -->
+            <circle cx="155" cy="168" r="9" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+            <path d="M 155 162 C 151 165, 151 171, 155 174 C 159 171, 159 165, 155 162 Z" fill="url(#berryShine)"/>
+          </g>
+
+          <!-- SLICE 5: Back-Center (Angle ~240° to 300°) -->
+          <g id="slice5" class="slice-3d slice-pos-5">
+            <path d="M 230 190 L 162 142 A 135 55 0 0 1 298 142 Z" fill="#fff1f2" stroke="#f43f5e" stroke-width="1.5"/>
+            <!-- Rosette & Berry -->
+            <circle cx="230" cy="150" r="10" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+            <path d="M 230 144 C 226 147, 226 153, 230 156 C 234 153, 234 147, 230 144 Z" fill="url(#berryShine)"/>
+          </g>
+
+          <!-- SLICE 6: Back-Right (Angle ~300° to 360°) -->
+          <g id="slice6" class="slice-3d slice-pos-6">
+            <!-- Top Sector -->
+            <path d="M 230 190 L 298 142 A 135 55 0 0 1 365 190 Z" fill="#ffe4e6" stroke="#fb7185" stroke-width="1.5"/>
+            <!-- Exposed Cut Wall (Left wall) -->
+            <path d="M 230 190 L 298 142 L 298 232 L 230 280 Z" fill="url(#spongeTexture)" stroke="#78350f" stroke-width="0.8"/>
+            <!-- Rosette & Berry -->
+            <circle cx="305" cy="168" r="9" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+            <path d="M 305 162 C 301 165, 301 171, 305 174 C 309 171, 309 165, 305 162 Z" fill="url(#berryShine)"/>
+          </g>
+
+          <!-- SLICE 3: Front-Left (Angle ~120° to 180°) -->
+          <g id="slice3" class="slice-3d slice-pos-3">
+            <!-- Exposed Cut Wall (visible when pulled apart) -->
+            <path d="M 230 190 L 95 190 L 95 280 L 230 280 Z" fill="url(#spongeTexture)" stroke="#451a03" stroke-width="0.8"/>
+            <!-- Front 3D Curved Cylinder Side -->
+            <path d="M 95 190 A 135 55 0 0 0 162 238 L 162 328 A 135 55 0 0 1 95 280 Z" fill="url(#frostingCylinder)" stroke="#f43f5e" stroke-width="1"/>
+            <!-- Ganache drip details on side -->
+            <path d="M 95 190 C 105 208, 115 198, 125 212 C 135 198, 145 220, 162 238 L 162 230 C 145 215, 135 190, 125 202 C 115 190, 105 195, 95 190 Z" fill="url(#ganacheChoc)"/>
+            <!-- Top Sector -->
+            <path d="M 230 190 L 95 190 A 135 55 0 0 0 162 238 Z" fill="url(#topGlaze)" stroke="#fda4af" stroke-width="1.5"/>
+            <!-- Rosette & Strawberry -->
+            <circle cx="152" cy="214" r="10" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+            <path d="M 152 208 C 148 211, 148 217, 152 220 C 156 217, 156 211, 152 208 Z" fill="url(#berryShine)"/>
+          </g>
+
+          <!-- SLICE 2: Front-Center (Angle ~60° to 120°) -->
+          <g id="slice2" class="slice-3d slice-pos-2">
+            <!-- Front 3D Curved Cylinder Side -->
+            <path d="M 162 238 A 135 55 0 0 0 298 238 L 298 328 A 135 55 0 0 1 162 328 Z" fill="url(#frostingCylinder)" stroke="#f43f5e" stroke-width="1"/>
+            <!-- Luxurious Chocolate Drip on Front -->
+            <path d="M 162 238 C 180 262, 195 242, 210 268 C 225 246, 245 272, 260 250 C 275 264, 285 245, 298 238 L 298 230 C 285 238, 275 252, 260 240 C 245 258, 225 236, 210 254 C 195 232, 180 250, 162 238 Z" fill="url(#ganacheChoc)"/>
+            <!-- Top Sector -->
+            <path d="M 230 190 L 162 238 A 135 55 0 0 0 298 238 Z" fill="url(#topGlaze)" stroke="#fda4af" stroke-width="1.5"/>
+            <!-- Rosette & Strawberry -->
+            <circle cx="230" cy="226" r="11" fill="#ffffff" stroke="#fed7aa" stroke-width="1.8"/>
+            <path d="M 230 219 C 225 223, 225 230, 230 234 C 235 230, 235 223, 230 219 Z" fill="url(#berryShine)"/>
+            <circle cx="228" cy="225" r="0.8" fill="#fef08a"/>
+            <circle cx="232" cy="227" r="0.8" fill="#fef08a"/>
+          </g>
+
+          <!-- SLICE 1: Front-Right (Angle ~0° to 60°) -->
+          <g id="slice1" class="slice-3d slice-pos-1">
+            <!-- Exposed Cut Wall (visible when pulled apart) -->
+            <path d="M 230 190 L 365 190 L 365 280 L 230 280 Z" fill="url(#spongeTexture)" stroke="#451a03" stroke-width="0.8"/>
+            <!-- Front 3D Curved Cylinder Side -->
+            <path d="M 298 238 A 135 55 0 0 0 365 190 L 365 280 A 135 55 0 0 1 298 328 Z" fill="url(#frostingCylinder)" stroke="#f43f5e" stroke-width="1"/>
+            <!-- Ganache Drip -->
+            <path d="M 298 238 C 315 252, 330 235, 345 248 C 355 238, 360 210, 365 190 L 365 185 C 360 200, 355 225, 345 235 C 330 220, 315 240, 298 238 Z" fill="url(#ganacheChoc)"/>
+            <!-- Top Sector -->
+            <path d="M 230 190 L 298 238 A 135 55 0 0 0 365 190 Z" fill="url(#topGlaze)" stroke="#fda4af" stroke-width="1.5"/>
+            <!-- Rosette & Strawberry -->
+            <circle cx="308" cy="214" r="10" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+            <path d="M 308 208 C 304 211, 304 217, 308 220 C 312 217, 312 211, 308 208 Z" fill="url(#berryShine)"/>
+          </g>
+
+        </g>
+
+        <!-- Center Cake Rosette & Happy Birthday Gold Plaque -->
+        <g id="cakeCenterPiece">
+          <ellipse cx="230" cy="190" rx="36" ry="14" fill="#ffffff" stroke="#fb7185" stroke-width="2"/>
+          <ellipse cx="230" cy="190" rx="30" ry="11" fill="url(#goldRim)"/>
+          <text x="230" y="193" font-size="7.5" font-weight="900" fill="#451a03" text-anchor="middle" font-family="'Outfit', sans-serif" letter-spacing="1">HAPPY B'DAY</text>
+        </g>
+
+        <!-- 3 Luxurious Realistic Birthday Candles with Dripping Wax & Flames -->
+        <g id="candlesLayer">
+          <!-- Left Pastel Sky Blue Candle -->
+          <g transform="translate(202, 142)">
+            <ellipse cx="5" cy="40" rx="4.5" ry="1.8" fill="#0284c7"/>
+            <rect x="0.5" y="6" width="9" height="34" fill="url(#frostingCylinder)" stroke="#0284c7" stroke-width="0.8"/>
+            <ellipse cx="5" cy="6" rx="4.5" ry="1.8" fill="#bae6fd"/>
+            <!-- Spiral Candy Stripe -->
+            <line x1="2" y1="12" x2="8" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="2" y1="24" x2="8" y2="30" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- Wick -->
+            <line x1="5" y1="6" x2="5" y2="1" stroke="#1e293b" stroke-width="1.5"/>
+            <!-- Flickering Flame -->
+            <path class="flame-element" d="M 5 1 C 1 -3, 1 -8, 5 -12 C 9 -8, 9 -3, 5 1 Z" fill="#f59e0b"/>
+            <circle class="flame-element" cx="5" cy="-5" r="2.8" fill="#fef08a"/>
+          </g>
+
+          <!-- Center Tall Golden Rose Candle -->
+          <g transform="translate(225, 126)">
+            <ellipse cx="5" cy="54" rx="5" ry="2" fill="#be123c"/>
+            <rect x="0" y="6" width="10" height="48" fill="#f43f5e" stroke="#9f1239" stroke-width="0.8"/>
+            <ellipse cx="5" cy="6" rx="5" ry="2" fill="#ffe4e6"/>
+            <!-- Spiral Gold Glitter Stripes -->
+            <line x1="2" y1="14" x2="8" y2="20" stroke="url(#goldRim)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="2" y1="28" x2="8" y2="34" stroke="url(#goldRim)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="2" y1="42" x2="8" y2="48" stroke="url(#goldRim)" stroke-width="2" stroke-linecap="round"/>
+            <!-- Wick -->
+            <line x1="5" y1="6" x2="5" y2="0" stroke="#0f172a" stroke-width="1.6"/>
+            <!-- Tall Glowing Flame -->
+            <path class="flame-element" d="M 5 0 C 0 -5, 0 -11, 5 -16 C 10 -11, 10 -5, 5 0 Z" fill="#fbbf24"/>
+            <circle class="flame-element" cx="5" cy="-7" r="3.2" fill="#ffffff"/>
+          </g>
+
+          <!-- Right Lavender Lilac Candle -->
+          <g transform="translate(248, 142)">
+            <ellipse cx="5" cy="40" rx="4.5" ry="1.8" fill="#7e22ce"/>
+            <rect x="0.5" y="6" width="9" height="34" fill="#a855f7" stroke="#6b21a8" stroke-width="0.8"/>
+            <ellipse cx="5" cy="6" rx="4.5" ry="1.8" fill="#f3e8ff"/>
+            <line x1="2" y1="12" x2="8" y2="18" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="2" y1="24" x2="8" y2="30" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+            <line x1="5" y1="6" x2="5" y2="1" stroke="#1e293b" stroke-width="1.5"/>
+            <!-- Flickering Flame -->
+            <path class="flame-element" d="M 5 1 C 1 -3, 1 -8, 5 -12 C 9 -8, 9 -3, 5 1 Z" fill="#f59e0b"/>
+            <circle class="flame-element" cx="5" cy="-5" r="2.8" fill="#fef08a"/>
+          </g>
+        </g>
+
+        <!-- Dynamic Laser Cut Flash Guide -->
+        <ellipse id="laserCutLine" cx="230" cy="190" rx="135" ry="55" fill="none" stroke="#f43f5e" stroke-width="3" stroke-dasharray="8 6" class="opacity-0 transition-opacity duration-300"/>
+      </svg>
+
+      <!-- Floating Interactive Knife with Sparkles -->
+      <div 
+        id="knifeWrapper" 
+        onclick="performKnifeCut()" 
+        class="knife-floating absolute top-1/2 left-1/2 z-30 select-none cursor-pointer flex flex-col items-center justify-center p-3 filter drop-shadow-2xl"
+        title="Click to cut the birthday cake!">
+        
+        <!-- Golden Sparkles -->
+        <div class="absolute -top-4 -right-4 text-3xl animate-spin" style="animation-duration: 4s;">✨</div>
+        <div class="absolute -bottom-3 -left-3 text-2xl animate-bounce">⭐</div>
+
+        <!-- Realistic Chef's Birthday Knife SVG -->
+        <svg width="130" height="130" viewBox="0 0 100 100" class="glow-gold transform transition-transform hover:scale-110 active:scale-95">
+          <!-- Mirrored Stainless Steel Blade with Specular Sheen -->
+          <path d="M 78 12 C 68 22, 46 44, 24 74 L 34 84 C 56 62, 78 40, 88 30 C 94 22, 88 14, 78 12 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+          <path d="M 72 18 L 30 72" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M 75 16 L 35 68" stroke="#cbd5e1" stroke-width="1.2"/>
+          <!-- Brass Bolster -->
+          <rect x="22" y="72" width="16" height="7" rx="3.5" transform="rotate(-45 28 75)" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>
+          <!-- Premium Rosewood Handle -->
+          <path d="M 23 75 L 5 93 C 2 96, 6 100, 9 97 L 27 79 Z" fill="#78350f" stroke="#451a03" stroke-width="2"/>
+          <circle cx="18" cy="84" r="1.5" fill="#fde68a"/>
+          <circle cx="12" cy="90" r="1.5" fill="#fde68a"/>
+        </svg>
+
+        <!-- Tap Prompt Tag -->
+        <div id="knifeTag" class="mt-1 px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-party font-bold text-xs sm:text-sm rounded-full shadow-lg whitespace-nowrap animate-pulse border-2 border-white tracking-wide">
+          🔪 Click Knife to Cut Cake & Open Letter!
+        </div>
+      </div>
+    </div>
+
+    <!-- Letter & Wish Cards Reveal Station -->
+    <div id="letterDock" class="w-full max-w-lg bg-white/90 backdrop-blur-md rounded-2xl p-4 border border-pink-200 shadow-lg mt-2 transition-all">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs sm:text-sm font-bold text-slate-700 flex items-center gap-1.5 font-party">
+          <span>💌</span> <span>Birthday Letter & Cards</span>
+        </span>
+        <span id="letterStatus" class="text-[11px] font-semibold text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-full border border-rose-200">
+          🔒 Cut Cake to Open
+        </span>
+      </div>
+
+      <!-- Envelope preview / Open Button -->
+      <div id="envelopeWrapper" onclick="openBirthdayLetter()" class="cursor-pointer group relative p-3 sm:p-4 rounded-xl bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 border-2 border-dashed border-pink-300 hover:border-rose-400 transition flex items-center justify-between shadow-xs">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-rose-500 text-white flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition-transform">
+            ✉️
+          </div>
+          <div class="text-left">
+            <h4 class="font-bold text-slate-800 text-sm sm:text-base group-hover:text-rose-600 transition">
+              A Special Letter For You
+            </h4>
+            <p class="text-xs text-slate-500 font-medium">
+              Tap to open and read heartfelt wishes
+            </p>
+          </div>
+        </div>
+        <span class="px-3 py-1.5 bg-rose-500 text-white font-party text-xs font-bold rounded-lg shadow-sm group-hover:bg-rose-600 transition">
+          Read 💌
+        </span>
+      </div>
+
+      <!-- Quick Wish Cards Row -->
+      <div class="grid grid-cols-3 gap-2 mt-3">
+        <button onclick="openSpecificCard('joy')" class="p-2 sm:p-2.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-bold text-pink-700 transition active:scale-95 text-center flex flex-col items-center gap-1">
+          <span class="text-base">🌸</span>
+          <span>Joy & Smiles</span>
+        </button>
+        <button onclick="openSpecificCard('health')" class="p-2 sm:p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-bold text-amber-700 transition active:scale-95 text-center flex flex-col items-center gap-1">
+          <span class="text-base">💫</span>
+          <span>Peace & Health</span>
+        </button>
+        <button onclick="openSpecificCard('dreams')" class="p-2 sm:p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xs font-bold text-rose-700 transition active:scale-95 text-center flex flex-col items-center gap-1">
+          <span class="text-base">✨</span>
+          <span>Big Dreams</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="w-full max-w-2xl text-center py-2 text-xs text-slate-500">
+    Birthday Wishes & Celebration • Pure Vanilla JS & Web Audio Synthesizer
+  </footer>
+</div>
+
+<!-- Heartfelt Letter & Wish Modal Popup -->
+<div id="wishModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+  <div id="wishCard" class="w-full max-w-lg bg-[#fffaf5] rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-pink-200 text-center transform scale-90 transition-all duration-300 relative max-h-[85vh] overflow-y-auto">
+    <button onclick="closeWishModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none p-1" aria-label="Close modal">&times;</button>
+    
+    <div id="modalBadge" class="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-pink-100 text-rose-600 border border-pink-200">
+      💌 A Birthday Letter
+    </div>
+
+    <div id="modalIcon" class="text-5xl my-2">
+      🌸
+    </div>
+
+    <h3 id="modalHeadline" class="font-party text-2xl sm:text-3xl font-bold text-slate-800 mb-3">
+      Happy Birthday!
+    </h3>
+
+    <!-- Letter paper container -->
+    <div class="p-5 sm:p-6 bg-white rounded-2xl border border-pink-100 mb-5 shadow-inner text-left relative">
+      <div class="absolute top-3 right-4 text-3xl opacity-20 select-none">🕊️</div>
+      <p id="modalBody" class="text-slate-700 text-sm sm:text-base leading-relaxed whitespace-pre-line font-medium">
+        Loading wishes...
+      </p>
+    </div>
+
+    <!-- Interactive Tabs for Cards inside Modal -->
+    <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+      <button onclick="openBirthdayLetter()" class="flex-1 py-3 px-3 font-bold text-xs sm:text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition">
+        💌 Full Letter
+      </button>
+      <button onclick="openSpecificCard('joy')" class="flex-1 py-3 px-3 font-bold text-xs sm:text-sm text-pink-700 bg-pink-50 border border-pink-200 rounded-xl hover:bg-pink-100 transition">
+        🌸 Joy Card
+      </button>
+      <button onclick="openSpecificCard('dreams')" class="flex-1 py-3 px-3 font-bold text-xs sm:text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl hover:bg-amber-100 transition">
+        ✨ Dreams Card
+      </button>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+      <button onclick="closeWishModal()" class="flex-1 py-3.5 px-4 font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl shadow-md hover:shadow-lg transition active:scale-98 font-party tracking-wide">
+        Close & Enjoy Cake 🍰
+      </button>
+      <button onclick="triggerConfettiExplosion()" class="py-3.5 px-4 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-xl transition">
+        🎉 Confetti
+      </button>
+    </div>
+  </div>
+</div>
+  <script>
+    /* ==========================================================================
+       1. HIGH-OUTPUT AUDIO CONTROLLER (DEFAULT SONG WITH SYNTH FALLBACK)
+       ========================================================================== */
+    let audioContext = null;
+    let masterGain = null;
+    let compressor = null;
+    let tuneTimerIds = [];
+    let isMusicPlaying = false;
+    const birthdayAudio = document.getElementById('birthdayAudio');
+
+    function initAudioEngine() {
+      if (!audioContext) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
+
+        // Dynamics compressor to boost gain without clipping (loud & clear)
+        compressor = audioContext.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-14, audioContext.currentTime);
+        compressor.knee.setValueAtTime(30, audioContext.currentTime);
+        compressor.ratio.setValueAtTime(12, audioContext.currentTime);
+        compressor.attack.setValueAtTime(0.003, audioContext.currentTime);
+        compressor.release.setValueAtTime(0.25, audioContext.currentTime);
+
+        // High output master gain
+        masterGain = audioContext.createGain();
+        masterGain.gain.setValueAtTime(0.85, audioContext.currentTime);
+
+        compressor.connect(masterGain);
+        masterGain.connect(audioContext.destination);
+      }
+
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+    }
+
+    // Play synthesized layered instrument note
+    function playHarmonicNote(frequency, duration = 0.45, startOffset = 0, baseVol = 0.5) {
+      if (!audioContext) return;
+      const now = audioContext.currentTime + startOffset;
+
+      // Layer 1: Bright Bell / Triangle Core
+      const osc1 = audioContext.createOscillator();
+      const gain1 = audioContext.createGain();
+      osc1.type = 'triangle';
+      osc1.frequency.setValueAtTime(frequency, now);
+
+      gain1.gain.setValueAtTime(baseVol * 0.7, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc1.connect(gain1);
+      gain1.connect(compressor);
+      osc1.start(now);
+      osc1.stop(now + duration);
+
+      // Layer 2: Warm Sine Resonance (Chime sparkle)
+      const osc2 = audioContext.createOscillator();
+      const gain2 = audioContext.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(frequency * 2, now);
+
+      gain2.gain.setValueAtTime(baseVol * 0.35, now);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + (duration * 0.7));
+
+      osc2.connect(gain2);
+      gain2.connect(compressor);
+      osc2.start(now);
+      osc2.stop(now + (duration * 0.7));
+    }
+
+    // Sound effect: Knife whoosh & cake slice crisp sound
+    function playKnifeCuttingSFX() {
+      initAudioEngine();
+      if (!audioContext) return;
+      const now = audioContext.currentTime;
+
+      const whooshOsc = audioContext.createOscillator();
+      const whooshGain = audioContext.createGain();
+      whooshOsc.type = 'sawtooth';
+      whooshOsc.frequency.setValueAtTime(800, now);
+      whooshOsc.frequency.exponentialRampToValueAtTime(140, now + 0.3);
+
+      whooshGain.gain.setValueAtTime(0.4, now);
+      whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+      whooshOsc.connect(whooshGain);
+      whooshGain.connect(compressor);
+      whooshOsc.start(now);
+      whooshOsc.stop(now + 0.32);
+
+      setTimeout(() => {
+        playHarmonicNote(523.25, 0.4, 0, 0.4);
+        playHarmonicNote(659.25, 0.4, 0.08, 0.4);
+        playHarmonicNote(783.99, 0.4, 0.16, 0.4);
+        playHarmonicNote(1046.50, 0.7, 0.24, 0.5);
+      }, 200);
+    }
+
+    // Synth fallback melody score
+    const BIRTHDAY_TUNE_SCORE = [
+      { f: 261.63, d: 0.35, chord: [261.63, 329.63] },
+      { f: 261.63, d: 0.22, chord: [] },
+      { f: 293.66, d: 0.55, chord: [293.66, 349.23] },
+      { f: 261.63, d: 0.55, chord: [261.63, 329.63] },
+      { f: 349.23, d: 0.55, chord: [349.23, 440.00] },
+      { f: 329.63, d: 0.95, chord: [261.63, 329.63, 392.00] }
+    ];
+
+    function playSynthFallback() {
+      let accumulatedSeconds = 0.05;
+      BIRTHDAY_TUNE_SCORE.forEach((item, index) => {
+        const timer = setTimeout(() => {
+          playHarmonicNote(item.f, item.d * 0.95, 0, 0.65);
+          if (item.chord) {
+            item.chord.forEach(c => playHarmonicNote(c, item.d * 0.9, 0, 0.28));
+          }
+          if (index === BIRTHDAY_TUNE_SCORE.length - 1) {
+            setTimeout(stopMusicTune, item.d * 1000);
+          }
+        }, accumulatedSeconds * 1000);
+        tuneTimerIds.push(timer);
+        accumulatedSeconds += item.d + 0.09;
+      });
+    }
+
+    function stopMusicTune() {
+      tuneTimerIds.forEach(id => clearTimeout(id));
+      tuneTimerIds = [];
+
+      if (birthdayAudio) {
+        birthdayAudio.pause();
+      }
+
+      isMusicPlaying = false;
+      const badge = document.getElementById('musicStatusBadge');
+      if (badge) badge.classList.add('hidden');
+      document.getElementById('audioIcon').textContent = '🎵';
+      document.getElementById('audioLabel').textContent = 'Play Music';
+    }
+
+    function startBirthdayMelody() {
+      initAudioEngine();
+      stopMusicTune();
+
+      isMusicPlaying = true;
+      const badge = document.getElementById('musicStatusBadge');
+      if (badge) badge.classList.remove('hidden');
+      document.getElementById('audioIcon').textContent = '⏸️';
+      document.getElementById('audioLabel').textContent = 'Pause Music';
+
+      if (birthdayAudio) {
+        birthdayAudio.currentTime = 0;
+        birthdayAudio.volume = 1.0;
+        const playPromise = birthdayAudio.play();
+
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            // Audio successfully playing
+          }).catch(error => {
+            console.warn('MP3 playback failed or file not found locally, falling back to synth chime:', error);
+            playSynthFallback();
+          });
+        }
+
+        birthdayAudio.onended = () => {
+          stopMusicTune();
+          triggerConfettiExplosion();
+        };
+      } else {
+        playSynthFallback();
+      }
+    }
+
+    function toggleTuneAudio() {
+      if (isMusicPlaying) {
+        stopMusicTune();
+      } else {
+        startBirthdayMelody();
+      }
+    }
+
+    /* ==========================================================================
+       2. MULTI-PAGE NAVIGATION CONTROLLER
+       ========================================================================== */
+    let currentStarName = "Friend";
+    let currentVibe = "🌸 Pure Sunshine";
+    let isCakeCut = false;
+
+    function fillName(name) {
+      const input = document.getElementById('userNameInput');
+      input.value = name;
+      document.getElementById('nameError').classList.add('hidden');
+      input.focus();
+    }
+
+    function selectVibe(vibeText, emoji) {
+      currentVibe = vibeText;
+      document.getElementById('avatarPreview').textContent = emoji;
+      document.querySelectorAll('.vibe-btn').forEach(btn => {
+        btn.classList.remove('active-vibe', 'border-rose-400', 'bg-rose-50', 'text-rose-700');
+        btn.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+      });
+      event.currentTarget.classList.add('active-vibe', 'border-rose-400', 'bg-rose-50', 'text-rose-700');
+    }
+
+    function proceedToCelebration() {
+      const input = document.getElementById('userNameInput');
+      const val = input.value.trim();
+
+      if (!val) {
+        document.getElementById('nameError').classList.remove('hidden');
+        input.focus();
+        return;
+      }
+      document.getElementById('nameError').classList.add('hidden');
+      currentStarName = val;
+
+      // Update greeting across Page 2
+      document.getElementById('starNameDisplay').textContent = `Happy Birthday, ${currentStarName}! 🎉`;
+
+      // Navigate Page 1 -> Page 2 (Slide effect)
+      const p1 = document.getElementById('page1');
+      const p2 = document.getElementById('page2');
+
+      p1.classList.remove('page-active');
+      p1.classList.add('page-left');
+
+      p2.classList.remove('page-right');
+      p2.classList.add('page-active');
+
+      // Pre-warm audio context
+      initAudioEngine();
+    }
+
+    function goToPage1() {
+      stopMusicTune();
+      const p1 = document.getElementById('page1');
+      const p2 = document.getElementById('page2');
+
+      p2.classList.remove('page-active');
+      p2.classList.add('page-right');
+
+      p1.classList.remove('page-left');
+      p1.classList.add('page-active');
+
+      document.getElementById('userNameInput').focus();
+    }
+
+    /* ==========================================================================
+       3. KNIFE CUTTING & CELEBRATION ACTION
+       ========================================================================== */
+    function performKnifeCut() {
+      if (isCakeCut) {
+        openBirthdayLetter();
+        return;
+      }
+
+      // CRITICAL: Trigger audio engine and music playback immediately inside the direct user-click gesture
+      initAudioEngine();
+      playKnifeCuttingSFX();
+      startBirthdayMelody();
+
+      const knife = document.getElementById('knifeWrapper');
+      const cakeGroup = document.getElementById('cakeSlicesGroup');
+      const cutLine = document.getElementById('laserCutLine');
+      const actionText = document.getElementById('actionGuideText');
+      const letterStatus = document.getElementById('letterStatus');
+
+      // 1. Trigger knife slicing animation down the cake
+      knife.classList.remove('knife-floating');
+      knife.classList.add('knife-slicing');
+
+      // 2. Flash dynamic slicing cut line
+      setTimeout(() => {
+        cutLine.classList.remove('opacity-0');
+        cutLine.classList.add('opacity-100');
+      }, 350);
+
+      // 3. Blow out candle flames
+      setTimeout(() => {
+        document.querySelectorAll('.flame-element').forEach(flame => flame.classList.add('flame-blown'));
+      }, 550);
+
+      // 4. Cake slices gently separate
+      setTimeout(() => {
+        cakeGroup.classList.add('cake-cut-open');
+        isCakeCut = true;
+
+        // Hide knife and update instructions
+        knife.style.display = 'none';
+        actionText.innerHTML = `✨ <strong>The cake is cut!</strong> Your birthday letter is unlocked!`;
+        actionText.classList.add('bg-pink-100', 'text-pink-800');
+
+        if (letterStatus) {
+          letterStatus.textContent = '🔓 Unlocked & Ready';
+          letterStatus.classList.remove('text-rose-500', 'bg-rose-50', 'border-rose-200');
+          letterStatus.classList.add('text-emerald-700', 'bg-emerald-50', 'border-emerald-200');
+        }
+
+        // 5. Blast Confetti
+        triggerConfettiExplosion();
+
+        // 6. Automatically open the birthday letter as the grand highlight
+        setTimeout(() => {
+          openBirthdayLetter();
+        }, 900);
+
+      }, 800);
+    }
+
+    /* ==========================================================================
+       4. SINCERE, SIMPLE & HEARTFELT WISHES & LETTER
+       ========================================================================== */
+    function getHeartfeltContent(name) {
+      return {
+        letter: {
+          badge: "💌 Birthday Letter",
+          icon: "🕊️",
+          headline: `Dearest ${name},`,
+          body: `Happy Birthday! 🎂✨\n\nOn your special day, I just wanted to take a moment to celebrate the wonderful person you are. Having you in life brings so much warmth, comfort, and positive energy.\n\nMay this year unfold with quiet peaceful mornings, belly laughs with the people who matter most, good health, and the courage to pursue every dream close to your heart.\n\nThank you for being so genuine, kind, and inspiring. I hope your day is as bright, sweet, and unforgettable as you make every moment for those around you.\n\nHere’s to another beautiful chapter! Happy Birthday! 🥂💖`
+        },
+        joy: {
+          badge: "🌸 Wish Card • Joy & Laughter",
+          icon: "🌻",
+          headline: "Smiles, Sunsets & Joy",
+          body: `Dear ${name},\n\nMay your year ahead be filled with moments that make your heart smile without reason, warm conversations, sunny days, and endless reasons to be genuinely happy.\n\nYou deserve all the sweetness this world has to offer today and always! 💐`
+        },
+        health: {
+          badge: "💫 Wish Card • Peace & Well-being",
+          icon: "✨",
+          headline: "Peace, Health & Serenity",
+          body: `To ${name},\n\nWishing you peaceful days, vibrant health, restful nights, and a calm mind that always knows its worth. May every step you take bring you closer to happiness and fulfillment.\n\nStay as gentle, grounded, and wonderful as you are! 🌿`
+        },
+        dreams: {
+          badge: "⭐ Wish Card • Dreams & Future",
+          icon: "🚀",
+          headline: "To Every Dream You Carry",
+          body: `Dear ${name},\n\nMay this new age bring exciting journeys, proud accomplishments, and the confidence to take on everything you've ever hoped for. The world is better with you in it, and great things are waiting for you!\n\nKeep shining brightly! 🌟`
+        }
+      };
+    }
+
+    function openBirthdayLetter() {
+      initAudioEngine();
+      playHarmonicNote(659.25, 0.35, 0, 0.4);
+
+      const content = getHeartfeltContent(currentStarName).letter;
+      showWishModal(content);
+    }
+
+    function openSpecificCard(type) {
+      initAudioEngine();
+      playHarmonicNote(587.33, 0.35, 0, 0.4);
+
+      const data = getHeartfeltContent(currentStarName)[type] || getHeartfeltContent(currentStarName).letter;
+      showWishModal(data);
+    }
+
+    function showWishModal(data) {
+      document.getElementById('modalBadge').textContent = data.badge;
+      document.getElementById('modalIcon').textContent = data.icon;
+      document.getElementById('modalHeadline').textContent = data.headline;
+      document.getElementById('modalBody').textContent = data.body;
+
+      const modal = document.getElementById('wishModal');
+      const card = document.getElementById('wishCard');
+      if (modal && card) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+        card.classList.remove('scale-90');
+        card.classList.add('scale-100');
+      }
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 35,
+          spread: 50,
+          origin: { y: 0.6 }
+        });
+      }
+    }
+
+    function closeWishModal() {
+      const modal = document.getElementById('wishModal');
+      const card = document.getElementById('wishCard');
+      if (modal && card) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.classList.remove('opacity-100', 'pointer-events-auto');
+        card.classList.add('scale-90');
+        card.classList.remove('scale-100');
+      }
+    }
+
+    /* ==========================================================================
+       5. CELEBRATORY VISUAL EFFECTS (CONFETTI CANNONS)
+       ========================================================================== */
+    function triggerConfettiExplosion() {
+      if (typeof confetti !== 'function') return;
+
+      // Burst 1: Center blast
+      confetti({
+        particleCount: 85,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ['#f43f5e', '#fbbf24', '#38bdf8', '#a855f7', '#ec4899']
+      });
+
+      // Burst 2 & 3: Side cannons
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.65 },
+          colors: ['#ff6b81', '#feca57', '#ff9ff3']
+        });
+        confetti({
+          particleCount: 50,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.65 },
+          colors: ['#48dbfb', '#54a0ff', '#1dd1a1']
+        });
+      }, 250);
+    }
+
+    /* ==========================================================================
+       6. GLOBAL INITIALIZATION & EVENT LISTENERS
+       ========================================================================== */
+    window.addEventListener('DOMContentLoaded', () => {
+      // Backdrop click to dismiss wish modal
+      const wishModal = document.getElementById('wishModal');
+      if (wishModal) {
+        wishModal.addEventListener('click', (e) => {
+          if (e.target.id === 'wishModal') {
+            closeWishModal();
+          }
+        });
+      }
+
+      // Escape key listener
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeWishModal();
+        }
+      });
+
+      // Auto-unlock Web Audio on first touch/click
+      const warmAudio = () => {
+        initAudioEngine();
+        document.removeEventListener('pointerdown', warmAudio);
+      };
+      document.addEventListener('pointerdown', warmAudio);
+    });
+  </script>
+</body>
+</html>
